@@ -7,11 +7,13 @@ import {
   Alert,
   Switch,
   StyleSheet,
+  TouchableOpacity,
 } from "react-native";
 import { db, auth } from "../../firebaseConfig";
-import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons"; // Install expo/vector-icons if not already
 
 export default function EventListScreen({ navigation }) {
   const [events, setEvents] = useState([]);
@@ -165,6 +167,18 @@ export default function EventListScreen({ navigation }) {
         )}
         keyExtractor={(item) => item.id}
       />
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() =>
+          navigation.navigate("AddEditEvent", {
+            eventId: null,
+          })
+        }
+      >
+        <Ionicons name="add" size={30} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -194,5 +208,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10,
+  },
+  fab: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#6200ea",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
   },
 });
