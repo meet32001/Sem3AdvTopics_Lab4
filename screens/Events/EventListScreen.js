@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View,Text,FlatList,Button,Alert,Switch,StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Button,
+  Alert,
+  Switch,
+  StyleSheet,
+} from "react-native";
 import { db, auth } from "../../firebaseConfig";
-import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -49,6 +57,35 @@ export default function EventListScreen({ navigation }) {
     }
   };
 
+  const deleteEvent = async (id) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this event?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const eventRef = doc(db, "favorites", id);
+              await deleteDoc(eventRef);
+              setEvents((prevEvents) =>
+                prevEvents.filter((event) => event.id !== id)
+              );
+              Alert.alert("Success", "Event deleted successfully.");
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete event.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // Add Logout button in header
   useEffect(() => {
     navigation.setOptions({
@@ -59,7 +96,7 @@ export default function EventListScreen({ navigation }) {
             try {
               await signOut(auth);
               Alert.alert("Logged out", "You have successfully logged out.");
-              // navigation.replace("SignIn");
+              navigation.replace("SignIn");
             } catch (error) {
               Alert.alert("Error", "Failed to log out.");
             }
@@ -114,6 +151,13 @@ export default function EventListScreen({ navigation }) {
                       isFavorite: item.isFavorite,
                     })
                   }
+                />
+
+                {/* Delete Button */}
+                <Button
+                  title="Delete"
+                  color="red"
+                  onPress={() => deleteEvent(item.id)}
                 />
               </View>
             )}
