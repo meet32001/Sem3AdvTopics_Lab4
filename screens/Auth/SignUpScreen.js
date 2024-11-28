@@ -51,7 +51,7 @@ export default function SignUpScreen({ navigation }) {
       });
 
       Alert.alert("Success", "Account created successfully!");
-      navigation.replace("SignIn"); // Navigate to SignIn
+      // navigation.replace("SignIn"); // Navigate to SignIn
     } catch (error) {
       Alert.alert("Error", error.message);
     } finally {

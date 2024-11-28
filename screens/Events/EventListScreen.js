@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { db, auth } from "../../firebaseConfig";
-import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -74,13 +74,14 @@ export default function EventListScreen({ navigation }) {
           onPress: async () => {
             try {
               const eventRef = doc(db, "favorites", id);
-              await deleteDoc(eventRef);
+              await deleteDoc(eventRef); // Ensure deleteDoc is correctly imported
               setEvents((prevEvents) =>
                 prevEvents.filter((event) => event.id !== id)
               );
               Alert.alert("Success", "Event deleted successfully.");
             } catch (error) {
               Alert.alert("Error", "Failed to delete event.");
+              console.error("Delete error:", error); // Log the error for debugging
             }
           },
         },
@@ -127,7 +128,7 @@ export default function EventListScreen({ navigation }) {
             <Text>{item.eventDate}</Text>
             <Text>{item.eventDescription}</Text>
 
-            {item.user_Id === auth.currentUser.email && (
+            {item.userId === auth.currentUser.email && (
               <View style={styles.actionContainer}>
                 {/* Favorites Switch */}
                 <View style={styles.switchContainer}>

@@ -13,7 +13,6 @@ import { doc, setDoc, updateDoc } from "firebase/firestore";
 import { auth } from "../../firebaseConfig";
 
 export default function AddEditEventScreen({ route, navigation }) {
-  // Destructure parameters with defaults
   const {
     eventId = null,
     eventName = "EventTitle",
@@ -60,8 +59,7 @@ export default function AddEditEventScreen({ route, navigation }) {
         await setDoc(eventRef, eventData);
         Alert.alert("Success", "Event created successfully!");
       }
-
-      navigation.goBack(); // Return to EventListScreen
+      navigation.goBack();
     } catch (error) {
       Alert.alert("Error", "Failed to save event.");
       console.error("Error saving event:", error);
