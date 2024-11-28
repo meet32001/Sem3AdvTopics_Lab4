@@ -1,39 +1,33 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+  Switch,
+} from "react-native";
 import { db } from "../../firebaseConfig";
-import { doc, updateDoc, getDoc, collection, addDoc } from "firebase/firestore";
+import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { auth } from "../../firebaseConfig";
 
 export default function AddEditEventScreen({ route, navigation }) {
-  const { eventId, eventName, eventDate, eventDescription, isFavorite } =
-    route.params || {}; // Destructure parameters from route
+  // Destructure parameters with defaults
+  const {
+    eventId = null,
+    eventName = "EventTitle",
+    eventDate = "2024-12-02",
+    eventDescription = "Hello world 1",
+    isFavorite = false,
+    userId = auth.currentUser?.email || "Unknown User",
+  } = route.params || {};
 
-  const [name, setName] = useState(eventName || ""); // Pre-fill event name
-  const [date, setDate] = useState(eventDate || ""); // Pre-fill event date
-  const [description, setDescription] = useState(
-    eventDescription || ""
-  ); // Pre-fill event description
+  const [name, setName] = useState(eventName);
+  const [date, setDate] = useState(eventDate);
+  const [description, setDescription] = useState(eventDescription);
+  const [favorite, setFavorite] = useState(isFavorite);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (eventId) {
-      fetchEventDetails(); // Fetch the event details if needed
-    }
-  }, [eventId]);
-
-  const fetchEventDetails = async () => {
-    try {
-      const docRef = doc(db, "favorites", eventId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setName(data.eventName);
-        setDate(data.eventDate);
-        setDescription(data.eventDescription);
-      }
-    } catch (error) {
-      Alert.alert("Error", "Failed to fetch event details.");
-    }
-  };
 
   const handleSave = async () => {
     if (!name || !date || !description) {
@@ -44,31 +38,33 @@ export default function AddEditEventScreen({ route, navigation }) {
     setLoading(true);
 
     try {
+      const eventRef = eventId
+        ? doc(db, "favorites", eventId)
+        : doc(db, "favorites", `unique_event_id_${Date.now()}`);
+
+      const eventData = {
+        eventName: name,
+        eventDate: date,
+        eventDescription: description,
+        isFavorite: favorite,
+        userId,
+        eventId: eventRef.id,
+      };
+
       if (eventId) {
         // Update existing event
-        const docRef = doc(db, "favorites", eventId);
-        await updateDoc(docRef, {
-          eventName: name,
-          eventDate: date,
-          eventDescription: description,
-          isFavorite: isFavorite || false,
-        });
-        Alert.alert("Success", "Event updated successfully.");
+        await updateDoc(eventRef, eventData);
+        Alert.alert("Success", "Event updated successfully!");
       } else {
         // Add new event
-        const collectionRef = collection(db, "favorites");
-        await addDoc(collectionRef, {
-          eventName: name,
-          eventDate: date,
-          eventDescription: description,
-          isFavorite: false,
-          user_Id: auth.currentUser.email,
-        });
-        Alert.alert("Success", "Event added successfully.");
+        await setDoc(eventRef, eventData);
+        Alert.alert("Success", "Event created successfully!");
       }
-      navigation.goBack(); // Navigate back to the Event List screen
+
+      navigation.goBack(); // Return to EventListScreen
     } catch (error) {
       Alert.alert("Error", "Failed to save event.");
+      console.error("Error saving event:", error);
     } finally {
       setLoading(false);
     }
@@ -76,9 +72,15 @@ export default function AddEditEventScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        {eventId ? "Edit Event" : "Add New Event"}
-      </Text>
+      <Text style={styles.title}>{eventId ? "Edit Event" : "Add Event"}</Text>
+
+      {/* Non-editable User ID */}
+      <View style={styles.field}>
+        <Text style={styles.label}>User ID:</Text>
+        <Text style={styles.value}>{userId}</Text>
+      </View>
+
+      {/* Editable Fields */}
       <TextInput
         style={styles.input}
         placeholder="Event Name"
@@ -87,7 +89,7 @@ export default function AddEditEventScreen({ route, navigation }) {
       />
       <TextInput
         style={styles.input}
-        placeholder="Event Date (YYYY-MM-DD)"
+        placeholder="Event Date"
         value={date}
         onChangeText={setDate}
       />
@@ -97,10 +99,17 @@ export default function AddEditEventScreen({ route, navigation }) {
         value={description}
         onChangeText={setDescription}
       />
+
+      {/* Favorite Switch */}
+      <View style={styles.switchContainer}>
+        <Text style={styles.switchLabel}>Mark as Favorite:</Text>
+        <Switch value={favorite} onValueChange={setFavorite} />
+      </View>
+
+      {/* Save Button */}
       <Button
-        title={loading ? "Saving..." : "Save"}
+        title={loading ? "Saving..." : eventId ? "Update Event" : "Add Event"}
         onPress={handleSave}
-        disabled={loading}
       />
     </View>
   );
@@ -110,11 +119,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: "#f5f5f5",
   },
   title: {
     fontSize: 24,
-    marginBottom: 20,
+    fontWeight: "bold",
     textAlign: "center",
+    marginBottom: 20,
+    color: "#333",
+  },
+  field: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    color: "#333",
+  },
+  value: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#555",
+    padding: 10,
+    backgroundColor: "#e9ecef",
+    borderRadius: 8,
   },
   input: {
     borderWidth: 1,
@@ -123,5 +150,16 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     fontSize: 16,
+    backgroundColor: "#fff",
+  },
+  switchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginVertical: 15,
+  },
+  switchLabel: {
+    fontSize: 16,
+    color: "#333",
   },
 });

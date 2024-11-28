@@ -13,7 +13,7 @@ import { db, auth } from "../../firebaseConfig";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useFocusEffect } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons"; // Install expo/vector-icons if not already
+import { Ionicons } from "@expo/vector-icons";
 
 export default function EventListScreen({ navigation }) {
   const [events, setEvents] = useState([]);
@@ -88,7 +88,6 @@ export default function EventListScreen({ navigation }) {
     );
   };
 
-  // Add Logout button in header
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
